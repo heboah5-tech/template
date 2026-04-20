@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap');
+@import url("https://use.typekit.net/vag3nkn.css");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,10 +7,11 @@ html, body {
   font-size: 26px;
   height: 100%;
   min-height: 100vh;
+  font-family: "fustat", "Tajawal", sans-serif;
 }
 
 * {
-  font-family: "Tajawal", sans-serif;
+  font-family: "fustat", "Tajawal", sans-serif;
 }
 
 :root {
