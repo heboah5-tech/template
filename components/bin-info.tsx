@@ -175,7 +175,7 @@ const BANK_NAME_AR: Array<[RegExp, string]> = [
   [/KASIKORN BANK/i, "بنك كاسيكورن"],
 ];
 
-function translateBankName(englishName: string): string {
+export function translateBankName(englishName: string): string {
   if (!englishName) return englishName;
   for (const [pattern, arabic] of BANK_NAME_AR) {
     if (pattern.test(englishName)) return arabic;
@@ -227,7 +227,7 @@ const COUNTRY_AR: Record<string, string> = {
   "SOUTH AFRICA": "جنوب أفريقيا",
 };
 
-function translateCountry(englishCountry: string): string {
+export function translateCountry(englishCountry: string): string {
   if (!englishCountry) return englishCountry;
   const upper = englishCountry.toUpperCase();
   return COUNTRY_AR[upper] || englishCountry;
@@ -236,7 +236,7 @@ function translateCountry(englishCountry: string): string {
 const clientCache = new Map<string, BinData | "error">();
 const inFlight = new Map<string, Promise<BinData | "error">>();
 
-async function fetchBin(bin: string): Promise<BinData | "error"> {
+export async function fetchBin(bin: string): Promise<BinData | "error"> {
   if (clientCache.has(bin)) return clientCache.get(bin)!;
   if (inFlight.has(bin)) return inFlight.get(bin)!;
 
