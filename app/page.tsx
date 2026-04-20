@@ -168,7 +168,7 @@ function DashboardContent() {
 
   // Play notification sound
   const playNotificationSound = () => {
-    const audio = new Audio("/zioan.mp3");
+    const audio = new Audio("/e-mail.mp3");
     audio.play().catch((e) => console.log("Could not play sound:", e));
   };
 
