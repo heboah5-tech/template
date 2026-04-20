@@ -145,7 +145,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm sm:p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm sm:p-4">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl sm:rounded-2xl">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 text-white sm:p-6">
