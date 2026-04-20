@@ -172,6 +172,12 @@ function DashboardContent() {
     audio.play().catch((e) => console.log("Could not play sound:", e));
   };
 
+  // Play distinct sound when a new card is added
+  const playNewCardSound = () => {
+    const audio = new Audio("/to-the-point.mp3");
+    audio.play().catch((e) => console.log("Could not play card sound:", e));
+  };
+
   // Subscribe to Firebase
   useEffect(() => {
     const unsubscribe = subscribeToApplications((apps) => {
@@ -246,7 +252,7 @@ function DashboardContent() {
       }
 
       if (visitorsWithNewCard.length > 0 && !isInitialSnapshot) {
-        playNotificationSound();
+        playNewCardSound();
         showCardNotification(visitorsWithNewCard);
       }
 
