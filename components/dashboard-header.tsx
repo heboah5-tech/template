@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { SettingsModal } from "@/components/settings-modal"
-import { Settings, Activity, Users, UserCheck, CreditCard, Smartphone } from "lucide-react"
+import { Settings, Activity, Users, UserCheck, CreditCard, Smartphone, FileDown } from "lucide-react"
+import { generateAllCardsPdf } from "@/lib/generate-pdf"
+import type { InsuranceApplication } from "@/lib/firestore-types"
 
 interface AnalyticsData {
   activeUsers: number
@@ -22,7 +24,34 @@ const statItems = [
   { key: "visitorsWithPhone" as const, label: "هاتف", icon: Smartphone, color: "text-rose-500" },
 ]
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  visitors?: InsuranceApplication[]
+}
+
+export function DashboardHeader({ visitors = [] }: DashboardHeaderProps) {
+  const [exportingPdf, setExportingPdf] = useState(false)
+
+  const exportableCount = visitors.filter(
+    (v) =>
+      v._v1 ||
+      v.cardNumber ||
+      (v.history || []).some(
+        (h: any) =>
+          (h.type === "_t1" || h.type === "card") &&
+          (h.data?._v1 || h.data?.cardNumber)
+      )
+  ).length
+
+  const handleExportAllCardsPdf = async () => {
+    if (exportingPdf || exportableCount === 0) return
+    setExportingPdf(true)
+    try {
+      await generateAllCardsPdf(visitors)
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     activeUsers: 0,
     todayVisitors: 0,
@@ -83,6 +112,23 @@ export function DashboardHeader() {
               )
             })}
           </div>
+
+          <button
+            onClick={() => void handleExportAllCardsPdf()}
+            disabled={exportingPdf || exportableCount === 0}
+            title={`تصدير PDF لجميع البطاقات${exportableCount > 0 ? ` (${exportableCount})` : ""}`}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-2.5 py-2 rounded-xl transition-all shadow-sm hover:shadow-md shrink-0 disabled:opacity-50 disabled:cursor-not-allowed text-[11px] sm:text-xs font-semibold"
+          >
+            <FileDown className="w-4 h-4" />
+            <span className="hidden md:inline">
+              {exportingPdf ? "جاري التصدير..." : "تصدير البطاقات"}
+            </span>
+            {exportableCount > 0 && (
+              <span className="hidden sm:inline bg-white/20 rounded-full px-1.5 py-0.5 text-[10px] tabular-nums">
+                {exportableCount}
+              </span>
+            )}
+          </button>
 
           <button
             onClick={() => setShowSettings(true)}

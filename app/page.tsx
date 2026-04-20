@@ -422,7 +422,7 @@ function DashboardContent() {
       className="min-h-full h-full flex flex-col bg-gradient-to-br from-slate-50 via-gray-50 to-indigo-50/40 dark:from-slate-950 dark:via-gray-950 dark:to-slate-900"
       dir="rtl"
     >
-      <DashboardHeader />
+      <DashboardHeader visitors={filteredApplications} />
       <div className="flex-1 flex overflow-hidden">
         <div
           className={`${

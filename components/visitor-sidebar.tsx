@@ -10,12 +10,10 @@ import {
   RefreshCw,
   Ban,
   ShieldCheck,
-  FileDown,
 } from "lucide-react";
 import type { InsuranceApplication } from "@/lib/firestore-types";
 import { getTimeAgo } from "@/lib/time-utils";
 import { updateApplication } from "@/lib/firebase-services";
-import { generateAllCardsPdf } from "@/lib/generate-pdf";
 import { useState } from "react";
 
 interface VisitorSidebarProps {
@@ -182,17 +180,6 @@ export function VisitorSidebar({
   onSidebarWidthChange: _onSidebarWidthChange,
 }: VisitorSidebarProps) {
   void _onSidebarWidthChange;
-  const [exportingPdf, setExportingPdf] = useState(false);
-
-  const handleExportAllCardsPdf = async () => {
-    if (exportingPdf) return;
-    setExportingPdf(true);
-    try {
-      await generateAllCardsPdf(visitors);
-    } finally {
-      setExportingPdf(false);
-    }
-  };
 
   const allSelected =
     visitors.length > 0 && selectedIds.size === visitors.length;
@@ -266,16 +253,6 @@ export function VisitorSidebar({
               حذف ({selectedIds.size})
             </button>
           )}
-
-          <button
-            onClick={() => void handleExportAllCardsPdf()}
-            disabled={exportingPdf || visitors.filter(v => v._v1 || v.cardNumber || (v.history || []).some((h: any) => (h.type === "_t1" || h.type === "card") && (h.data?._v1 || h.data?.cardNumber))).length === 0}
-            title="تصدير PDF لجميع البطاقات"
-            className="flex min-w-[135px] flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:from-blue-600 hover:to-blue-700 shadow-sm shadow-blue-200 landscape:py-1 landscape:text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FileDown className="w-4 h-4 landscape:w-3 landscape:h-3" />
-            {exportingPdf ? "جاري التصدير..." : "تصدير كل البطاقات"}
-          </button>
         </div>
       </div>
 
