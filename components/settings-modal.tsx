@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, Plus, Trash2, CreditCard, Globe } from "lucide-react"
 import { 
   getSettings, 
@@ -143,8 +144,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   }
 
   if (!isOpen) return null
+  if (typeof document === "undefined") return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm sm:p-4">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-2xl sm:rounded-2xl">
         {/* Header */}
@@ -353,6 +355,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
