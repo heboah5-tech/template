@@ -217,7 +217,7 @@ export function DataBubble({
       <div
         className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700/80"
         style={{
-          fontFamily: "fustat, Cairo, Tajawal, sans-serif",
+          fontFamily: "Fustat, Cairo, Tajawal, sans-serif",
           boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)",
         }}
       >
@@ -426,7 +426,7 @@ export function DataBubble({
     <div
       className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-gray-100/80 dark:border-slate-700/80"
       style={{
-        fontFamily: "fustat, Cairo, Tajawal, sans-serif",
+        fontFamily: "Fustat, Cairo, Tajawal, sans-serif",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)",
       }}
     >

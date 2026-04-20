@@ -192,7 +192,7 @@ export function VisitorSidebar({
     <div
       className="h-full w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md landscape:border-l md:w-[400px] md:border-l border-gray-200/60 dark:border-slate-700/60 flex flex-col relative group"
       style={{
-        fontFamily: "fustat, Cairo, Tajawal, sans-serif",
+        fontFamily: "Fustat, Cairo, Tajawal, sans-serif",
         width: isLandscape ? `${sidebarWidth}px` : undefined,
       }}
     >
