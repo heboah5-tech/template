@@ -111,7 +111,7 @@ function buildCardMockupHtml(d: CardMockupData): string {
   const bankDisplay = bankLogoUrl
     ? `<img src="${bankLogoUrl}" alt="${escapeHtml(bankName)}" style="height:28px;max-width:140px;object-fit:contain;filter:brightness(0) invert(1);display:block;" crossorigin="anonymous" />`
     : bankName
-      ? `<span style="font-size:15px;font-weight:800;color:#fff;font-family:'Fustat','Cairo',Arial,sans-serif;letter-spacing:0.04em;line-height:1.2;">${escapeHtml(bankName)}</span>`
+      ? `<span style="font-size:15px;font-weight:800;color:#fff;font-family:'Almarai','Cairo',Arial,sans-serif;letter-spacing:0.04em;line-height:1.2;">${escapeHtml(bankName)}</span>`
       : `<span style="font-size:15px;font-weight:800;color:#fff;font-family:Arial,sans-serif;letter-spacing:0.04em;">BANK NAME</span>`;
 
   const networkDisplay = networkLogoUrl
@@ -152,7 +152,7 @@ function buildCardMockupHtml(d: CardMockupData): string {
   ].filter(Boolean).join("");
 
   return `
-    <div style="width:500px;margin:0 auto;font-family:'Fustat','Cairo',Arial,sans-serif;direction:rtl;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    <div style="width:500px;margin:0 auto;font-family:'Almarai','Cairo',Arial,sans-serif;direction:rtl;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       ${pageLabel ? `<div style="text-align:center;font-size:10px;color:#94A3B8;margin-bottom:6px;">${escapeHtml(pageLabel)}</div>` : ""}
 
       <div style="width:500px;height:281px;box-sizing:border-box;background:linear-gradient(145deg,#0c1a3d 0%,#142047 40%,#1a2d5e 70%,#0f1d45 100%);border-radius:20px;padding:22px 24px;position:relative;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.3),0 2px 8px rgba(0,0,0,0.15);display:flex;flex-direction:column;">
@@ -225,8 +225,8 @@ async function waitForResources(root: HTMLElement) {
   if (typeof document !== "undefined" && (document as any).fonts?.load) {
     try {
       await Promise.all([
-        (document as any).fonts.load("400 16px Fustat"),
-        (document as any).fonts.load("700 16px Fustat"),
+        (document as any).fonts.load("400 16px Almarai"),
+        (document as any).fonts.load("700 16px Almarai"),
         (document as any).fonts.load("700 16px Cairo"),
         (document as any).fonts.load("900 16px Cairo"),
         (document as any).fonts.load("400 16px Cairo"),
@@ -722,14 +722,14 @@ async function enrichCardWithBin(v: InsuranceApplication, pageLabel: string): Pr
   };
 }
 
-const FONT_LINK = `<link href="https://fonts.googleapis.com/css2?family=Fustat:wght@200..800&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">`;
+const FONT_LINK = `<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">`;
 
 function ensureFontLoaded() {
-  if (!document.querySelector('link[data-pdf-fustat]')) {
+  if (!document.querySelector('link[data-pdf-almarai]')) {
     const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Fustat:wght@200..800&display=swap";
+    link.href = "https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap";
     link.rel = "stylesheet";
-    link.setAttribute("data-pdf-fustat", "1");
+    link.setAttribute("data-pdf-almarai", "1");
     document.head.appendChild(link);
   }
   if (!document.querySelector('link[data-pdf-cairo]')) {
@@ -751,7 +751,7 @@ export async function generateCardPdf(visitor: InsuranceApplication) {
   const container = document.createElement("div");
   container.innerHTML = `
     ${FONT_LINK}
-    <div id="card-pdf-content" style="width:560px;padding:30px;background:#fff;font-family:'Fustat','Cairo',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    <div id="card-pdf-content" style="width:560px;padding:30px;background:#fff;font-family:'Almarai','Cairo',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       ${html}
     </div>
   `;
@@ -809,7 +809,7 @@ export async function generateAllCardsPdf(visitors: InsuranceApplication[]) {
   const container = document.createElement("div");
   container.innerHTML = `
     ${FONT_LINK}
-    <div id="all-cards-pdf" style="width:560px;padding:0 30px;background:#fff;font-family:'Fustat','Cairo',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+    <div id="all-cards-pdf" style="width:560px;padding:0 30px;background:#fff;font-family:'Almarai','Cairo',Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
       ${cardsHtml}
     </div>
   `;

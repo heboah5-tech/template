@@ -61,7 +61,7 @@ export function ZoomFontControls() {
         flexDirection: "column",
         alignItems: "flex-start",
         gap: "6px",
-        fontFamily: "Fustat, Cairo, Tajawal, sans-serif",
+        fontFamily: "Almarai, Cairo, Tajawal, sans-serif",
       }}
     >
       <div style={{ display: "flex", gap: "6px" }}>
